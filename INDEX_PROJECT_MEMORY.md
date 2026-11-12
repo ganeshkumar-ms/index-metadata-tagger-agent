@@ -12,8 +12,8 @@
 | **S3 Hosting Bucket** | `s3://index-ui-984625844016` (Protected with Origin Access Control) |
 | **AWS Lambda Compute** | `index-backend-api` (Python 3.11, Bedrock Nova Pro Converse API) |
 | **IAM Execution Role** | `arn:aws:iam::984625844016:role/index-backend-lambda-role` |
-| **Local Project Path** | `c:\Users\ELCOT\OneDrive\Desktop\Agent\index\` |
-| **Beginner Study Guide PDF** | `c:\Users\ELCOT\OneDrive\Desktop\Agent\index\INDEX_BEGINNER_STUDY_GUIDE.pdf` |
+| **Local Project Path** | `c:\Users\ELCOT\OneDrive\Desktop\Agent\index-metadata-tagger-agent\` |
+| **Beginner Study Guide PDF** | `c:\Users\ELCOT\OneDrive\Desktop\Agent\index-metadata-tagger-agent\INDEX_BEGINNER_STUDY_GUIDE.pdf` |
 
 ---
 

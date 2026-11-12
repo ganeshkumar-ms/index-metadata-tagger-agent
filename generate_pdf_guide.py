@@ -406,7 +406,7 @@ def build_pdf(filename="INDEX_BEGINNER_STUDY_GUIDE.pdf"):
     # Verification Footer Callout
     v_text = (
         "<b>Architect Verification Passed:</b> INDEX is fully initialized as a dedicated agent inside "
-        "<code>c:\\Users\\ELCOT\\OneDrive\\Desktop\\Agent\\index\\</code>. All enterprise guardrails, multi-dimensional schemas, "
+        "<code>c:\\Users\\ELCOT\\OneDrive\\Desktop\\Agent\\index-metadata-tagger-agent\\</code>. All enterprise guardrails, multi-dimensional schemas, "
         "UI requirements (hover-only edit/delete, click-to-edit title, smart top-scroll), and AWS deployment scripts are verified."
     )
     t_v = Table([[Paragraph(v_text, callout_style)]], colWidths=[504])
