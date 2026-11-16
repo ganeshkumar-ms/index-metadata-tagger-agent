@@ -80,6 +80,36 @@ You MUST return a JSON object with this exact structure:
     "Key1": "Value1 tailored specifically to the document type",
     "Key2": "Value2 (e.g., for AWS tech doc: Platform, Architecture, Services, Database; for HR: Leave Type, Accrual Rate, Approval SLA; for Insurance: Claim Type, Deductible, Vehicle Class)"
   },
+  "governance": {
+    "retention_period": "Statutory retention period (e.g., 7 Years (Statutory / Financial), Permanent Archive, 3 Years Operational)",
+    "confidentiality_level": "Level (e.g., Internal Confidential, Public, Highly Confidential, Restricted BFSI)",
+    "regulatory_frameworks": ["Relevant standards/mandates, e.g. GDPR, PCI-DSS v4.0, ISO 27001, SOC 2, HIPAA, RBI Master Direction"],
+    "data_classification": "Category (e.g., PII & Financial Records, Proprietary Architecture, Public Documentation, HR Sensitive)",
+    "archival_tier": "Storage lifecycle (e.g., Hot / Active S3, Warm / Infrequent Access, Cold / Glacier Deep Archive)"
+  },
+  "technical_metrics": {
+    "estimated_word_count": "Calculated or estimated word count (e.g., 850 words)",
+    "reading_time": "Estimated reading duration (e.g., 3-4 mins)",
+    "readability_level": "Complexity (e.g., Professional Enterprise, Executive Technical, Specialized Legal, General Public)",
+    "content_density": "Information density (e.g., High - Parameter & Rule Heavy, Moderate, Narrative Flow)",
+    "primary_intent": "Document intent (e.g., Architectural Specification, Compliance Guideline, Transactional Settlement, Policy)"
+  },
+  "taxonomy_breadcrumbs": {
+    "facet_path": ["Level 1 Domain", "Level 2 Sub-Sector", "Level 3 Process Area", "Level 4 Activity", "Level 5 Artifact"],
+    "alternative_titles": ["Alternative Title 1", "Alternative Title 2"],
+    "sentiment_tone": "Communication tone (e.g., Authoritative & Technical, Formal Policy, Instructional)"
+  },
+  "actionable_intelligence": {
+    "key_takeaways": [
+      "High-impact takeaway 1 extracted directly from content",
+      "High-impact takeaway 2",
+      "High-impact takeaway 3"
+    ],
+    "action_items": [
+      "Concrete action or prerequisite 1",
+      "Concrete action or prerequisite 2"
+    ]
+  },
   "search_optimization": {
     "recommended_filename": "Standardized canonical filename (e.g., AWS_Serverless_Architecture_Guide_v2.0.pdf)",
     "intent_queries": [

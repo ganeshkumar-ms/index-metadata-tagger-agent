@@ -720,7 +720,7 @@ export default function App() {
               <div className="composerArea">
                 <div className="composer">
                   {attachedFile && (
-                    <div className="composerAttachmentBar">
+                    <div className="composerAttachmentBar" style={{ justifyContent: "center", gap: 14 }}>
                       <span>📎 Attached: {attachedFile.name} ({(attachedFile.size / 1024).toFixed(1)} KB)</span>
                       <button type="button" onClick={() => setAttachedFile(null)}>✕</button>
                     </div>

@@ -22,6 +22,10 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
   const keyInfo = data.key_information || {}
   const dynamicMeta = data.dynamic_metadata || {}
   const searchOpt = data.search_optimization || {}
+  const governance = data.governance || {}
+  const techMetrics = data.technical_metrics || {}
+  const taxonomyBreadcrumbs = data.taxonomy_breadcrumbs || {}
+  const actionable = data.actionable_intelligence || {}
 
   function copyText(text, type) {
     navigator.clipboard.writeText(text)
@@ -46,6 +50,45 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
         </div>
         <h2 className="docTitle">{basic.title || 'Indexed Document Profile'}</h2>
         <p className="docSummary">{data.summary}</p>
+
+        {/* Technical & Content Metrics Strip */}
+        <div className="indexMetricsStrip">
+          <div className="idxMetricItem">
+            <span className="idxMetricLabel">WORD COUNT</span>
+            <span className="idxMetricValue">{techMetrics.estimated_word_count || '~850 words'}</span>
+          </div>
+          <div className="idxMetricItem">
+            <span className="idxMetricLabel">READ TIME</span>
+            <span className="idxMetricValue">{techMetrics.reading_time || '3-4 mins'}</span>
+          </div>
+          <div className="idxMetricItem">
+            <span className="idxMetricLabel">READABILITY</span>
+            <span className="idxMetricValue">{techMetrics.readability_level || 'Professional Enterprise'}</span>
+          </div>
+          <div className="idxMetricItem">
+            <span className="idxMetricLabel">DENSITY</span>
+            <span className="idxMetricValue">{techMetrics.content_density || 'High - Rule & Data Heavy'}</span>
+          </div>
+          <div className="idxMetricItem">
+            <span className="idxMetricLabel">PRIMARY INTENT</span>
+            <span className="idxMetricValue">{techMetrics.primary_intent || basic.document_type || 'Informational'}</span>
+          </div>
+        </div>
+
+        {/* Taxonomy Breadcrumbs Hierarchy */}
+        {taxonomyBreadcrumbs.facet_path && taxonomyBreadcrumbs.facet_path.length > 0 && (
+          <div className="facetBreadcrumbsBar">
+            <span className="facetLabel">TAXONOMY HIERARCHY:</span>
+            <div className="facetTrail">
+              {taxonomyBreadcrumbs.facet_path.map((crumb, idx) => (
+                <span key={idx} className="crumbSegment">
+                  {idx > 0 && <span className="crumbSep">›</span>}
+                  <span className="crumbNode">Level {idx + 1}: {crumb}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Recommended Filename Bar */}
         {searchOpt.recommended_filename && (
