@@ -2,6 +2,8 @@ import os
 import json
 import re
 import random
+import datetime
+import uuid
 import boto3
 from pathlib import Path
 from typing import Dict, Any, List
@@ -339,11 +341,16 @@ def extract_metadata(
     parsed_json = _sanitize_ai_output(parsed_json)
 
     # 5. Format Return Package
+    trace_code = f"IXT-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+    if isinstance(parsed_json, dict):
+        parsed_json['trace_id'] = trace_code
     return {
         "status": "success",
         "type": "index_result",
         "data": parsed_json,
+        "trace_id": trace_code,
         "guardrails": {
+            "status": "REDACTED" if guardrail_result.get("has_redactions") else "PASSED",
             "pci_dss_sanitized": True,
             "redacted_count": guardrail_result.get("guardrails", {}).get("redacted_count", 0),
             "redacted_types": guardrail_result.get("guardrails", {}).get("redacted_types", []),

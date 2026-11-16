@@ -352,7 +352,10 @@ export default function App() {
     }))
 
     try {
-      const response = await tagContent({ file, text: content, conversationHistory: history })
+      const [response] = await Promise.all([
+        tagContent({ file, text: content, conversationHistory: history }),
+        new Promise(res => setTimeout(res, 900))
+      ])
 
       const docMeta = response.document_metadata
       const updatedUserMsg = docMeta && (userMessage.fileName || file)

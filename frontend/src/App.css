@@ -265,19 +265,20 @@ header {
   width: 46px;
   height: 46px;
   flex: 0 0 46px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(7, 140, 255, 0.28);
   border-radius: 15px;
-  background: linear-gradient(145deg, #092742, #051a2c);
-  color: #92b0cf;
+  background: rgba(7, 140, 255, 0.08);
+  color: #38bdf8;
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: 0.3s;
+  transition: 0.25s;
 }
 
 .startAttach:hover {
   color: #fff;
   transform: translateY(-2px);
+  background: rgba(7, 140, 255, 0.18);
   border-color: var(--a1);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(7, 140, 255, 0.3);
 }
@@ -871,10 +872,15 @@ header {
 }
 
 .user {
-  align-self: flex-end;
-  background: linear-gradient(135deg, var(--a1), #0566be);
-  color: #fff;
-  border-radius: 18px 18px 5px 18px;
+  align-self: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  background: #051a2c !important;
+  border: 1px solid rgba(7, 140, 255, 0.25) !important;
+  color: #f0f7ff !important;
+  border-radius: 18px 18px 5px 18px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  max-width: min(88%, 680px);
 }
 
 .user .userDocPill {
@@ -976,12 +982,12 @@ header {
 .plus {
   width: 40px;
   height: 40px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(7, 140, 255, 0.28);
   border-radius: 13px;
-  background: linear-gradient(145deg, #1b1e28, #141720);
-  color: #9299aa;
+  background: rgba(7, 140, 255, 0.08);
+  color: #38bdf8;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.25s;
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -990,6 +996,7 @@ header {
 .plus:hover {
   color: #fff;
   transform: translateY(-2px);
+  background: rgba(7, 140, 255, 0.18);
   border-color: var(--a1);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 18px rgba(7, 140, 255, 0.3);
 }

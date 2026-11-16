@@ -38,8 +38,79 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
     }
   }
 
+  const traceId = data?.trace_id || basic?.trace_id || ''
+
   return (
     <div className="indexResultCard">
+      {/* 0. GUARDRAILS STATUS BAR & TOP-RIGHT TRACE ID */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          marginBottom: '14px',
+          width: '100%'
+        }}
+      >
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 12px',
+            borderRadius: '999px',
+            fontSize: '11.5px',
+            fontWeight: 700,
+            background: guardrails?.status === 'BLOCKED'
+              ? 'rgba(239, 68, 68, 0.22)'
+              : guardrails?.status === 'REDACTED'
+              ? 'rgba(251, 191, 36, 0.16)'
+              : 'rgba(52, 211, 153, 0.16)',
+            color: guardrails?.status === 'BLOCKED'
+              ? '#f87171'
+              : guardrails?.status === 'REDACTED'
+              ? '#fbbf24'
+              : '#34d399',
+            border: guardrails?.status === 'BLOCKED'
+              ? '1px solid rgba(239, 68, 68, 0.65)'
+              : guardrails?.status === 'REDACTED'
+              ? '1px solid rgba(251, 191, 36, 0.5)'
+              : '1px solid rgba(52, 211, 153, 0.45)'
+          }}
+        >
+          <span>🛡️</span>
+          <span>
+            {guardrails?.status === 'BLOCKED'
+              ? `Guardrails: Blocked (${guardrails.triggered_rule || 'Policy Violation'})`
+              : guardrails?.status === 'REDACTED'
+              ? `Guardrails: ${guardrails.redacted_count || 1} Secret(s) Sanitized`
+              : 'Guardrails: Passed · Verified Safe'}
+          </span>
+        </span>
+
+        {traceId && (
+          <span
+            style={{
+              fontSize: '11px',
+              fontFamily: 'ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace',
+              fontWeight: 600,
+              color: '#38bdf8',
+              letterSpacing: '0.6px',
+              padding: '3px 9px',
+              borderRadius: '6px',
+              background: 'rgba(7, 140, 255, 0.08)',
+              border: '1px solid rgba(7, 140, 255, 0.24)',
+              marginLeft: 'auto',
+              flexShrink: 0
+            }}
+            title="Verification Trace Code"
+          >
+            {traceId}
+          </span>
+        )}
+      </div>
+
       {/* 1. Header & Canonical Title */}
       <div className="cardHeaderBlock">
         <div className="cardBadgeRow">
