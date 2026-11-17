@@ -724,14 +724,24 @@ export default function App() {
 
               {/* Composer */}
               <div className="composerArea">
-                <div className="composer">
-                  {attachedFile && (
-                    <div className="composerAttachmentBar" style={{ justifyContent: "center", gap: 14 }}>
-                      <span>📎 Attached: {attachedFile.name} ({(attachedFile.size / 1024).toFixed(1)} KB)</span>
-                      <button type="button" onClick={() => setAttachedFile(null)}>✕</button>
+                {attachedFile && (
+                  <div style={{ display: 'flex', justifyContent: 'center', width: '100%', margin: '0 auto 10px' }}>
+                    <div className="attachedRow composerAttached">
+                      <span className="attachChip">
+                        <span className="attachName">{attachedFile.name}</span>
+                        <button
+                          type="button"
+                          className="attachRemove"
+                          aria-label={`Remove ${attachedFile.name}`}
+                          onClick={() => { setAttachedFile(null); if (chatFileInputRef.current) chatFileInputRef.current.value = '' }}
+                        >
+                          ×
+                        </button>
+                      </span>
                     </div>
-                  )}
-
+                  </div>
+                )}
+                <div className="composer">
                   <form onSubmit={e => {
                     e.preventDefault()
                     handleSend()
@@ -740,37 +750,30 @@ export default function App() {
                       ref={chatFileInputRef}
                       type="file"
                       className="fileInput"
-                      onChange={e => {
-                        if (e.target.files && e.target.files[0]) {
-                          setAttachedFile(e.target.files[0])
-                        }
-                      }}
+                      accept=".pdf,.docx,.txt,.csv,.json,.xml,.html,.md"
+                      onChange={handleChatFile}
                     />
                     <button
                       className="plus"
                       type="button"
                       aria-label="Add file"
-                      title="Attach file"
+                      title="Attach file (PDF, Word, TXT, CSV, JSON, HTML)"
                       onClick={() => chatFileInputRef.current?.click()}
                     >
                       <svg className="icon" viewBox="0 0 24 24">
                         <path d="m21.4 11.6-8.9 8.9a6 6 0 0 1-8.5-8.5l9.3-9.3a4 4 0 0 1 5.7 5.7l-9.3 9.3a2 2 0 0 1-2.8-2.8l8.6-8.6" />
                       </svg>
                     </button>
-
                     <input
-                      placeholder="Message INDEX or attach a document to tag..."
-                      value={inputText}
-                      onChange={e => setInputText(e.target.value)}
-                      disabled={isThinking}
+                      ref={chatInputRef}
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      placeholder="Message INDEX or attach a document..."
+                      maxLength={1000}
+                      autoComplete="off"
+                      aria-label="Message"
                     />
-
-                    <button
-                      className="chatSend"
-                      type="submit"
-                      aria-label="Send"
-                      disabled={isThinking || (!inputText.trim() && !attachedFile)}
-                    >
+                    <button className="chatSend" type="submit" aria-label="Send" disabled={isThinking}>
                       <svg className="icon" viewBox="0 0 24 24">
                         <path d="M5 12h13" />
                         <path d="m13 7 5 5-5 5" />

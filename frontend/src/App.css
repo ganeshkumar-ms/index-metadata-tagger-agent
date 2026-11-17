@@ -79,7 +79,6 @@ button, input, textarea {
   background-size: 28px 28px;
   opacity: 0.14;
   pointer-events: none;
-  animation: themePattern 12s linear infinite;
   z-index: 1;
 }
 
@@ -645,7 +644,8 @@ header {
   line-height: 1.65;
   color: #e6f1fc;
   white-space: pre-wrap;
-  padding: 4px 2px;
+  padding: 4px 0;
+  margin: 0;
 }
 
 .histIcon {
@@ -913,7 +913,7 @@ header {
   border: 1px solid var(--line);
   border-radius: 18px 18px 18px 5px;
   backdrop-filter: blur(18px);
-  padding: 0;
+  padding: 18px 24px !important;
 }
 
 /* Thinking Indicator */
@@ -2632,4 +2632,54 @@ html, body {
 }
 .actionUl li {
   margin-bottom: 4px;
+}
+
+
+/* Attached Pill Standard (Matches ALLY) */
+.attachedRow {
+  max-width: 740px;
+  margin: 12px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.composerAttached {
+  max-width: 780px;
+  margin: 0 auto;
+  justify-content: center;
+}
+
+.attachChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(5, 26, 44, 0.85);
+  border: 1px solid rgba(7, 140, 255, 0.44);
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.attachName {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachRemove {
+  border: 0;
+  background: transparent;
+  color: #38bdf8;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.attachRemove:hover {
+  color: #ffffff;
 }
