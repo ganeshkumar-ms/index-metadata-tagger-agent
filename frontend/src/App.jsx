@@ -504,14 +504,17 @@ export default function App() {
               </div>
 
               {attachedFile && (
-                <div className="filePill show">
-                  <span>📎 Attached: {attachedFile.name}</span>
-                  <button
-                    style={{ background: 'none', border: 0, color: '#fca5a5', cursor: 'pointer', marginLeft: 8 }}
-                    onClick={() => setAttachedFile(null)}
-                  >
-                    ✕
-                  </button>
+                <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '14px' }}>
+                  <div className="filePill show">
+                    <span>📎 Attached: {attachedFile.name}</span>
+                    <button
+                      style={{ background: 'none', border: 0, color: '#fca5a5', cursor: 'pointer', marginLeft: 8 }}
+                      onClick={() => setAttachedFile(null)}
+                      type="button"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
