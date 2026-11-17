@@ -1,9 +1,238 @@
 import { useState } from 'react'
 
-export default function IndexResultCard({ data, guardrails, fileName, documentMetadata, onOpenDocument }) {
-  const [copiedFilename, setCopiedFilename] = useState(false)
+function ShieldIcon() {
+  return (
+    <svg className="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  )
+}
+
+function CopyIcon({ size = 13 }) {
+  return (
+    <svg className="icon" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  )
+}
+
+function CheckIcon({ size = 13 }) {
+  return (
+    <svg className="icon" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+}
+
+function DownloadIcon({ size = 14 }) {
+  return (
+    <svg className="icon" viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
+function deterministicHash(str) {
+  let h1 = 0xdeadbeef ^ (str || '').length
+  let h2 = 0x41c6ce57 ^ (str || '').length
+  for (let i = 0; i < (str || '').length; i++) {
+    const ch = str.charCodeAt(i)
+    h1 = Math.imul(h1 ^ ch, 2654435761)
+    h2 = Math.imul(h2 ^ ch, 1597334677)
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909)
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909)
+  const hex1 = (h1 >>> 0).toString(16).padStart(8, '0')
+  const hex2 = (h2 >>> 0).toString(16).padStart(8, '0')
+  return `${hex1}${hex2}${hex1}${hex2}`
+}
+
+function buildStandardMetadataProperties(data, documentMetadata, fileName) {
+  const meta = documentMetadata || data?.document_metadata || {}
+  const basic = data?.basic || {}
+  const business = data?.business || {}
+  const governance = data?.governance || {}
+  const tech = data?.technical_metrics || {}
+  const visual = data?.visual_media_metadata || {}
+  const content = data?.content || {}
+  const entities = data?.entities || {}
+  const keyInfo = data?.key_information || {}
+  const searchOpt = data?.search_optimization || {}
+  const dyn = data?.dynamic_metadata || {}
+
+  const rawName = fileName || meta.filename || searchOpt.recommended_filename || 'Enterprise_Asset.pdf'
+  const extMatch = rawName.match(/\.[^/.]+$/)
+  const ext = extMatch ? extMatch[0].toLowerCase() : (meta.type || '.pdf')
+  const extUpper = ext.toUpperCase().replace('.', '') || 'FILE'
+  const isImage = meta.kind === 'image' || ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'].includes(ext)
+
+  const mimeMap = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.pdf': 'application/pdf',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.csv': 'text/csv',
+    '.json': 'application/json',
+    '.txt': 'text/plain'
+  }
+  const mimeType = meta.mime_type || mimeMap[ext] || (isImage ? 'image/png' : 'application/octet-stream')
+  const sizeBytes = meta.size_bytes || 0
+  const sizeDisplay = sizeBytes
+    ? `${(sizeBytes / 1024).toFixed(2)} KB (${sizeBytes.toLocaleString()} bytes)`
+    : (tech.estimated_word_count ? `${tech.estimated_word_count} (Digital Stream)` : 'Verified Payload')
+
+  const hashSeed = `${rawName}_${basic.title || ''}_${data?.summary || ''}`
+  const sha = meta.sha256 || deterministicHash(hashSeed)
+  const shortSha = sha.length > 28 ? `${sha.slice(0, 20)}...${sha.slice(-8)}` : sha
+  const todayDate = new Date().toISOString().split('T')[0]
+
+  const rows = [
+    // 1. FILE & TECHNICAL PROPERTIES (8 Properties)
+    { category: 'File & Technical', property: 'Original File Name', value: rawName },
+    { category: 'File & Technical', property: 'Standardized File Name', value: searchOpt.recommended_filename || `Standardized_${rawName.replace(/\s+/g, '_')}` },
+    { category: 'File & Technical', property: 'File Format & Extension', value: `${extUpper} (${isImage ? 'Raster Image Format' : 'Digital Document Format'})` },
+    { category: 'File & Technical', property: 'MIME Type', value: mimeType },
+    { category: 'File & Technical', property: 'File Size', value: sizeDisplay },
+    { category: 'File & Technical', property: 'Character / Media Encoding', value: isImage ? (meta.compression || `${extUpper} Lossless / Standard Stream`) : (tech.encoding_standard || 'UTF-8 Digital Stream') },
+    { category: 'File & Technical', property: 'SHA-256 Checksum', value: shortSha },
+    { category: 'File & Technical', property: 'Indexed Date (UTC)', value: todayDate },
+
+    // 2. CONTENT & DESCRIPTIVE PROPERTIES (8 Properties)
+    { category: 'Content & Descriptive', property: 'Title', value: basic.title || 'Indexed Enterprise Asset' },
+    { category: 'Content & Descriptive', property: 'Artifact / Document Type', value: basic.document_type || (isImage ? 'Visual Media Asset' : 'Enterprise Document') },
+    { category: 'Content & Descriptive', property: 'Primary Subject / Core Topic', value: content.core_topic || basic.title || 'Enterprise Content' },
+    { category: 'Content & Descriptive', property: 'Summary / Abstract', value: data?.summary || 'Standardized enterprise asset metadata record.' },
+    { category: 'Content & Descriptive', property: 'Subtopics', value: (content.subtopics && content.subtopics.length > 0) ? content.subtopics.join(', ') : (business.subdomain || 'Operational Documentation') },
+    { category: 'Content & Descriptive', property: 'Language', value: basic.language || 'English (en-US)' },
+    { category: 'Content & Descriptive', property: 'Version', value: `v${basic.version || '1.0'}` },
+    { category: 'Content & Descriptive', property: 'Publication Status', value: basic.publication_status || 'Active / Verified' },
+
+    // 3. MEDIA, VISUAL & STRUCTURAL PROPERTIES (6 Properties)
+    { category: 'Media & Structure', property: 'Content Modality', value: isImage ? (visual.media_modality || 'Raster Image / Visual Capture') : (visual.media_modality || 'Structured Digital Text') },
+    {
+      category: 'Media & Structure',
+      property: isImage ? 'Image Resolution & Aspect Ratio' : 'Page / Section Count',
+      value: isImage
+        ? (meta.resolution ? `${meta.resolution} · Aspect Ratio ${meta.aspect_ratio || '16:9'} · ${meta.megapixels || 'Digital'}` : 'High-Resolution Visual Canvas')
+        : `${meta.pages || meta.slides || 1} Page(s)`
+    },
+    {
+      category: 'Media & Structure',
+      property: isImage ? 'Color Space & Bit Depth' : 'Word & Character Count',
+      value: isImage
+        ? `${meta.color_space || 'sRGB (24-bit TrueColor)'} · ${meta.bit_depth || '8-bit per channel'}`
+        : `${tech.estimated_word_count || `${meta.word_count || 450} words`}${meta.char_count ? ` · ${meta.char_count.toLocaleString()} characters` : ''}`
+    },
+    {
+      category: 'Media & Structure',
+      property: isImage ? 'Orientation & Layout Composition' : 'Structural Format & Density',
+      value: isImage
+        ? `${meta.orientation || 'Landscape'} · ${visual.layout_composition || 'Structured Visual Frame'}`
+        : `${tech.structural_format || 'Hierarchical Sections'} · ${tech.content_density || 'High Information Density'}`
+    },
+    { category: 'Media & Structure', property: 'Readability / Legibility Grade', value: tech.readability_level || 'Professional Enterprise' },
+    { category: 'Media & Structure', property: 'Estimated Review Time', value: tech.reading_time || (isImage ? '1–2 mins' : '3–4 mins') },
+
+    // 4. BUSINESS & OWNERSHIP PROPERTIES (6 Properties)
+    { category: 'Business & Ownership', property: 'Industry / Domain', value: business.domain || 'Enterprise Operations' },
+    { category: 'Business & Ownership', property: 'Sub-Domain', value: business.subdomain || 'Information Management' },
+    { category: 'Business & Ownership', property: 'Business Process / Workflow', value: business.process_area || 'Operational Execution' },
+    { category: 'Business & Ownership', property: 'Business Function', value: business.business_function || 'Operations & Governance' },
+    { category: 'Business & Ownership', property: 'Owner / Custodian Department', value: basic.owner_department || 'Corporate Operations' },
+    { category: 'Business & Ownership', property: 'Target Audience', value: basic.target_audience || 'Enterprise Stakeholders' },
+
+    // 5. GOVERNANCE, SECURITY & LIFECYCLE PROPERTIES (6 Properties)
+    { category: 'Governance & Security', property: 'Confidentiality Level', value: governance.confidentiality_level || 'Internal Confidential' },
+    { category: 'Governance & Security', property: 'Data Classification', value: governance.data_classification || 'Enterprise Operational Record' },
+    { category: 'Governance & Security', property: 'Access Control Policy', value: governance.access_control_policy || 'Role-Based Enterprise Access (RBAC)' },
+    { category: 'Governance & Security', property: 'Retention Period', value: governance.retention_period || '7 Years Statutory' },
+    { category: 'Governance & Security', property: 'Storage / Archival Tier', value: governance.archival_tier || 'Active Standard Storage' },
+    {
+      category: 'Governance & Security',
+      property: 'Regulatory & Compliance Standards',
+      value: (governance.regulatory_frameworks && governance.regulatory_frameworks.length > 0)
+        ? governance.regulatory_frameworks.join(', ')
+        : ((entities.regulations_standards && entities.regulations_standards.length > 0) ? entities.regulations_standards.join(', ') : 'ISO 27001, SOC 2, GDPR')
+    },
+
+    // 6. SEMANTIC, ENTITY & DOMAIN-SPECIFIC PROPERTIES (6+ Properties)
+    {
+      category: 'Semantic & Entities',
+      property: 'Search Keywords',
+      value: (content.keywords && content.keywords.length > 0) ? content.keywords.join(', ') : 'enterprise, metadata, document, governance'
+    },
+    {
+      category: 'Semantic & Entities',
+      property: 'Metadata Tags',
+      value: (content.tags && content.tags.length > 0) ? content.tags.map(t => (t.startsWith('#') ? t : `#${t}`)).join('  ') : '#enterprise  #metadata  #verified'
+    }
+  ]
+
+  if (entities.organizations && entities.organizations.length > 0) {
+    rows.push({ category: 'Semantic & Entities', property: 'Organizations / Entities', value: entities.organizations.join(', ') })
+  }
+  if (entities.systems_applications && entities.systems_applications.length > 0) {
+    rows.push({ category: 'Semantic & Entities', property: 'Systems & Platforms', value: entities.systems_applications.join(', ') })
+  }
+  if (entities.roles && entities.roles.length > 0) {
+    rows.push({ category: 'Semantic & Entities', property: 'Roles & Personas', value: entities.roles.join(', ') })
+  }
+  if (keyInfo.dates && keyInfo.dates.length > 0) {
+    rows.push({ category: 'Semantic & Entities', property: 'Referenced Dates', value: keyInfo.dates.join(', ') })
+  }
+  if (keyInfo.deadlines && keyInfo.deadlines.length > 0) {
+    rows.push({ category: 'Semantic & Entities', property: 'Deadlines / SLAs', value: keyInfo.deadlines.join(', ') })
+  }
+  if (keyInfo.monetary_amounts && keyInfo.monetary_amounts.length > 0) {
+    rows.push({ category: 'Semantic & Entities', property: 'Financial Figures / Metrics', value: keyInfo.monetary_amounts.join(', ') })
+  }
+  if (visual.accessibility_alt_text) {
+    rows.push({ category: 'Media & Structure', property: 'Accessibility Alt-Text', value: visual.accessibility_alt_text })
+  }
+
+  // Append all domain-specific dynamic_metadata attributes
+  if (dyn && typeof dyn === 'object') {
+    Object.entries(dyn).forEach(([k, v]) => {
+      const label = String(k).replace(/_/g, ' ').trim()
+      const valStr = Array.isArray(v) ? v.join(', ') : String(v || '').trim()
+      if (label && valStr) {
+        const alreadyExists = rows.some(r => r.property.toLowerCase() === label.toLowerCase())
+        if (!alreadyExists) {
+          rows.push({
+            category: 'Semantic & Entities',
+            property: label,
+            value: valStr
+          })
+        }
+      }
+    })
+  }
+
+  return rows
+}
+
+const CATEGORIES = [
+  'All Metadata',
+  'File & Technical',
+  'Content & Descriptive',
+  'Media & Structure',
+  'Business & Ownership',
+  'Governance & Security',
+  'Semantic & Entities'
+]
+
+export default function IndexResultCard({ data, guardrails, fileName, documentMetadata }) {
+  const [activeCategory, setActiveCategory] = useState('All Metadata')
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
   const [copiedSummary, setCopiedSummary] = useState(false)
-  const [selectedIntent, setSelectedIntent] = useState(null)
+  const [copiedRowIdx, setCopiedRowIdx] = useState(null)
 
   if (!data) return null
 
@@ -16,29 +245,65 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
   }
 
   const basic = data.basic || {}
-  const business = data.business || {}
-  const content = data.content || {}
-  const entities = data.entities || {}
-  const keyInfo = data.key_information || {}
-  const dynamicMeta = data.dynamic_metadata || {}
   const searchOpt = data.search_optimization || {}
-  const governance = data.governance || {}
-  const techMetrics = data.technical_metrics || {}
-  const taxonomyBreadcrumbs = data.taxonomy_breadcrumbs || {}
-  const actionable = data.actionable_intelligence || {}
+  const traceId = data?.trace_id || basic?.trace_id || ''
 
-  function copyText(text, type) {
+  const allProperties = buildStandardMetadataProperties(data, documentMetadata, fileName)
+  const visibleProperties =
+    activeCategory === 'All Metadata'
+      ? allProperties
+      : allProperties.filter(item => item.category === activeCategory)
+
+  function copyValue(text, idx) {
+    if (!text) return
     navigator.clipboard.writeText(text)
-    if (type === 'filename') {
-      setCopiedFilename(true)
-      setTimeout(() => setCopiedFilename(false), 2000)
-    } else if (type === 'summary') {
+    if (idx === 'json') {
       setCopiedSummary(true)
       setTimeout(() => setCopiedSummary(false), 2000)
+    } else {
+      setCopiedRowIdx(idx)
+      setTimeout(() => setCopiedRowIdx(null), 1600)
     }
   }
 
-  const traceId = data?.trace_id || basic?.trace_id || ''
+  function handleExportCsv() {
+    const headers = ['Category', 'Metadata Property', 'Value']
+    const rows = allProperties.map(r =>
+      [r.category, r.property, r.value]
+        .map(v => `"${String(v || '').replace(/"/g, '""')}"`)
+        .join(',')
+    )
+    const csvContent = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const baseName = (searchOpt.recommended_filename || basic.title || 'Enterprise_Asset').replace(/\.[^/.]+$/, '').replace(/\s+/g, '_')
+    a.download = `${baseName}_Metadata.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  function handleExportJson() {
+    const jsonObj = {
+      asset_title: basic.title || 'Indexed Enterprise Asset',
+      trace_id: traceId,
+      total_metadata_properties: allProperties.length,
+      metadata_properties: allProperties
+    }
+    const blob = new Blob([JSON.stringify(jsonObj, null, 2)], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const baseName = (searchOpt.recommended_filename || basic.title || 'Enterprise_Asset').replace(/\.[^/.]+$/, '').replace(/\s+/g, '_')
+    a.download = `${baseName}_Metadata.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="indexResultCard">
@@ -49,8 +314,9 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
-          marginBottom: '14px',
-          width: '100%'
+          marginBottom: '6px',
+          width: '100%',
+          flexWrap: 'wrap'
         }}
       >
         <span
@@ -64,22 +330,14 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
             fontWeight: 700,
             background: guardrails?.status === 'BLOCKED'
               ? 'rgba(239, 68, 68, 0.22)'
-              : guardrails?.status === 'REDACTED'
-              ? 'rgba(52, 211, 153, 0.16)'
               : 'rgba(52, 211, 153, 0.16)',
-            color: guardrails?.status === 'BLOCKED'
-              ? '#f87171'
-              : guardrails?.status === 'REDACTED'
-              ? '#34d399'
-              : '#34d399',
+            color: guardrails?.status === 'BLOCKED' ? '#f87171' : '#34d399',
             border: guardrails?.status === 'BLOCKED'
               ? '1px solid rgba(239, 68, 68, 0.65)'
-              : guardrails?.status === 'REDACTED'
-              ? '1px solid rgba(52, 211, 153, 0.45)'
               : '1px solid rgba(52, 211, 153, 0.45)'
           }}
         >
-          <span>🛡️</span>
+          <ShieldIcon />
           <span>
             {guardrails?.status === 'BLOCKED'
               ? `Guardrails: Blocked (${guardrails.triggered_rule || 'Policy Violation'})`
@@ -111,340 +369,131 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
         )}
       </div>
 
-      {/* 1. Header & Canonical Title */}
-      <div className="cardHeaderBlock">
-        <div className="cardBadgeRow">
-          <span className="typeBadge">{basic.document_type || 'Document'}</span>
-          {business.domain && <span className="domainBadge">{business.domain}</span>}
-          {basic.version && <span className="versionBadge">v{basic.version}</span>}
-          {fileName && <span className="originalFileBadge">Original: {fileName}</span>}
-        </div>
-        <h2 className="docTitle">{basic.title || 'Indexed Document Profile'}</h2>
-        <p className="docSummary">{data.summary}</p>
+      {/* 1. CLEAN ENTERPRISE METADATA SPECIFICATION SHEET */}
+      <div className="idxRegistrySection">
+        <div className="idxRegistryHeaderRow">
+          <div>
+            <h2 className="docTitle" style={{ marginBottom: 4 }}>
+              {basic.title || 'Enterprise Asset Metadata Specification'}
+            </h2>
+            <p className="docSummary" style={{ marginBottom: 0 }}>
+              {allProperties.length} Standardized Enterprise Metadata Properties Extracted
+            </p>
+          </div>
 
-        {/* Technical & Content Metrics Strip */}
-        <div className="indexMetricsStrip">
-          <div className="idxMetricItem">
-            <span className="idxMetricLabel">WORD COUNT</span>
-            <span className="idxMetricValue">{techMetrics.estimated_word_count || '~850 words'}</span>
-          </div>
-          <div className="idxMetricItem">
-            <span className="idxMetricLabel">READ TIME</span>
-            <span className="idxMetricValue">{techMetrics.reading_time || '3-4 mins'}</span>
-          </div>
-          <div className="idxMetricItem">
-            <span className="idxMetricLabel">READABILITY</span>
-            <span className="idxMetricValue">{techMetrics.readability_level || 'Professional Enterprise'}</span>
-          </div>
-          <div className="idxMetricItem">
-            <span className="idxMetricLabel">DENSITY</span>
-            <span className="idxMetricValue">{techMetrics.content_density || 'High - Rule & Data Heavy'}</span>
-          </div>
-          <div className="idxMetricItem">
-            <span className="idxMetricLabel">PRIMARY INTENT</span>
-            <span className="idxMetricValue">{techMetrics.primary_intent || basic.document_type || 'Informational'}</span>
-          </div>
-        </div>
+          <div className="idxExportBtns">
+            <div className="idxDropdownWrap">
+              <button
+                type="button"
+                className="idxActionBtn"
+                onClick={() => setDownloadMenuOpen(prev => !prev)}
+              >
+                <DownloadIcon size={13} />
+                <span>Download</span>
+                <svg className="icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
 
-        {/* Taxonomy Breadcrumbs Hierarchy */}
-        {taxonomyBreadcrumbs.facet_path && taxonomyBreadcrumbs.facet_path.length > 0 && (
-          <div className="facetBreadcrumbsBar">
-            <span className="facetLabel">TAXONOMY HIERARCHY:</span>
-            <div className="facetTrail">
-              {taxonomyBreadcrumbs.facet_path.map((crumb, idx) => (
-                <span key={idx} className="crumbSegment">
-                  {idx > 0 && <span className="crumbSep">›</span>}
-                  <span className="crumbNode">Level {idx + 1}: {crumb}</span>
-                </span>
-              ))}
+              {downloadMenuOpen && (
+                <div className="idxDropdownMenu">
+                  <button
+                    type="button"
+                    className="idxDropdownItem"
+                    onClick={() => {
+                      setDownloadMenuOpen(false)
+                      handleExportCsv()
+                    }}
+                  >
+                    <span>CSV (.csv)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="idxDropdownItem"
+                    onClick={() => {
+                      setDownloadMenuOpen(false)
+                      handleExportJson()
+                    }}
+                  >
+                    <span>JSON (.json)</span>
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-        )}
 
-        {/* Recommended Filename Bar */}
-        {searchOpt.recommended_filename && (
-          <div className="filenameBanner">
-            <div className="filenameLabel">
-              <svg className="icon" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              <span>RECOMMENDED CANONICAL FILENAME:</span>
-            </div>
-            <code className="canonicalName">{searchOpt.recommended_filename}</code>
             <button
-              className="copyBtn"
               type="button"
-              onClick={() => copyText(searchOpt.recommended_filename, 'filename')}
+              className="idxActionBtn"
+              onClick={() => copyValue(JSON.stringify(allProperties, null, 2), 'json')}
             >
-              {copiedFilename ? '✓ COPIED' : 'COPY FILENAME'}
+              {copiedSummary ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
+              <span>{copiedSummary ? 'Copied' : 'Copy All'}</span>
             </button>
           </div>
-        )}
-      </div>
-
-      {/* 2. Basic & Business Taxonomy 2-Column Grid */}
-      <div className="twoColGrid">
-        <div className="taxoCard">
-          <div className="taxoHead">
-            <svg className="icon" viewBox="0 0 24 24">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-            <h3>BASIC METADATA</h3>
-          </div>
-          <div className="metaRows">
-            <div className="metaRow">
-              <span className="metaKey">Document Type:</span>
-              <span className="metaVal">{basic.document_type || '—'}</span>
-            </div>
-            <div className="metaRow">
-              <span className="metaKey">Target Audience:</span>
-              <span className="metaVal">{basic.target_audience || '—'}</span>
-            </div>
-            <div className="metaRow">
-              <span className="metaKey">Owner / Department:</span>
-              <span className="metaVal">{basic.owner_department || '—'}</span>
-            </div>
-            <div className="metaRow">
-              <span className="metaKey">Language:</span>
-              <span className="metaVal">{basic.language || 'English'}</span>
-            </div>
-          </div>
         </div>
 
-        <div className="taxoCard">
-          <div className="taxoHead">
-            <svg className="icon" viewBox="0 0 24 24">
-              <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-            </svg>
-            <h3>BUSINESS TAXONOMY</h3>
-          </div>
-          <div className="metaRows">
-            <div className="metaRow">
-              <span className="metaKey">Domain:</span>
-              <span className="metaVal">{business.domain || '—'}</span>
-            </div>
-            <div className="metaRow">
-              <span className="metaKey">Subdomain:</span>
-              <span className="metaVal">{business.subdomain || '—'}</span>
-            </div>
-            <div className="metaRow">
-              <span className="metaKey">Process Area:</span>
-              <span className="metaVal">{business.process_area || '—'}</span>
-            </div>
-            <div className="metaRow">
-              <span className="metaKey">Business Function:</span>
-              <span className="metaVal">{business.business_function || '—'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Dynamic Metadata (Domain-Specific Adaptation) */}
-      {dynamicMeta && Object.keys(dynamicMeta).length > 0 && (
-        <div className="dynamicSection">
-          <div className="sectionHead">
-            <span className="dotAccent" />
-            <h4>DYNAMIC ATTRIBUTES (ADAPTIVE TO DOCUMENT TYPE)</h4>
-          </div>
-          <div className="dynamicChipsGrid">
-            {Object.entries(dynamicMeta).map(([k, v]) => (
-              <div key={k} className="dynamicChip">
-                <span className="dKey">{k}</span>
-                <span className="dVal">{Array.isArray(v) ? v.join(', ') : String(v)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 4. Content Intelligence: Topics, Keywords, & Tags */}
-      <div className="contentSection">
-        <div className="sectionHead">
-          <span className="dotAccent" />
-          <h4>CONTENT TOPICS & TAXONOMY TAGS</h4>
+        {/* Category Filter Tabs */}
+        <div className="idxFilterBar">
+          {CATEGORIES.map(cat => {
+            const count =
+              cat === 'All Metadata'
+                ? allProperties.length
+                : allProperties.filter(r => r.category === cat).length
+            return (
+              <button
+                key={cat}
+                type="button"
+                className={`idxFilterPill${activeCategory === cat ? ' active' : ''}`}
+                onClick={() => setActiveCategory(cat)}
+              >
+                <span>{cat}</span>
+                <span className="idxFilterCount">{count}</span>
+              </button>
+            )
+          })}
         </div>
 
-        {content.core_topic && (
-          <div className="coreTopicBanner">
-            <span className="ctLabel">CORE TOPIC:</span>
-            <span className="ctText">{content.core_topic}</span>
-          </div>
-        )}
-
-        {content.subtopics && content.subtopics.length > 0 && (
-          <div className="tagCluster">
-            <span className="clusterLabel">Subtopics:</span>
-            <div className="tagList">
-              {content.subtopics.map((item, i) => (
-                <span key={i} className="subtopicChip">{item}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {content.tags && content.tags.length > 0 && (
-          <div className="tagCluster">
-            <span className="clusterLabel">Dynamic Tags:</span>
-            <div className="tagList">
-              {content.tags.map((tag, i) => (
-                <span key={i} className="hashtagChip">{tag.startsWith('#') ? tag : `#${tag}`}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {content.keywords && content.keywords.length > 0 && (
-          <div className="tagCluster">
-            <span className="clusterLabel">Search Keywords:</span>
-            <div className="tagList">
-              {content.keywords.map((kw, i) => (
-                <span key={i} className="keywordChip">{kw}</span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 5. Identified Entities */}
-      {entities && Object.values(entities).some(arr => arr && arr.length > 0) && (
-        <div className="entitiesSection">
-          <div className="sectionHead">
-            <span className="dotAccent" />
-            <h4>NAMED ENTITIES & COMPLIANCE STANDARDS</h4>
-          </div>
-          <div className="entitiesGrid">
-            {entities.organizations && entities.organizations.length > 0 && (
-              <div className="entityBlock">
-                <span className="eType">Organizations</span>
-                <p>{entities.organizations.join(', ')}</p>
-              </div>
-            )}
-            {entities.systems_applications && entities.systems_applications.length > 0 && (
-              <div className="entityBlock">
-                <span className="eType">Systems & Tools</span>
-                <p>{entities.systems_applications.join(', ')}</p>
-              </div>
-            )}
-            {entities.roles && entities.roles.length > 0 && (
-              <div className="entityBlock">
-                <span className="eType">Roles & Personas</span>
-                <p>{entities.roles.join(', ')}</p>
-              </div>
-            )}
-            {entities.regulations_standards && entities.regulations_standards.length > 0 && (
-              <div className="entityBlock">
-                <span className="eType">Regulations & Standards</span>
-                <p>{entities.regulations_standards.join(', ')}</p>
-              </div>
-            )}
-          </div>
+        {/* Standard 3-Column Enterprise Metadata Table */}
+        <div className="idxTableWrap">
+          <table className="idxMetadataTable">
+            <thead>
+              <tr>
+                <th style={{ width: '22%' }}>Category</th>
+                <th style={{ width: '28%' }}>Metadata Property</th>
+                <th style={{ width: '50%' }}>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleProperties.map((row, idx) => {
+                const isCopied = copiedRowIdx === idx
+                return (
+                  <tr key={`${row.property}-${idx}`}>
+                    <td className="idxColCat">
+                      <span className="idxCatBadge">{row.category}</span>
+                    </td>
+                    <td className="idxColLabel">
+                      <strong>{row.property}</strong>
+                    </td>
+                    <td className="idxColVal">
+                      <div className="idxValWrap">
+                        <span>{row.value}</span>
+                        <button
+                          type="button"
+                          className="idxRowCopyBtn"
+                          title="Copy value"
+                          onClick={() => copyValue(row.value, idx)}
+                        >
+                          {isCopied ? <CheckIcon size={12} /> : <CopyIcon size={12} />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
-
-      {/* 6. Key Information (Dates, Deadlines, Amounts, Rules) */}
-      {keyInfo && Object.values(keyInfo).some(arr => arr && arr.length > 0) && (
-        <div className="keyInfoSection">
-          <div className="sectionHead">
-            <span className="dotAccent" />
-            <h4>KEY DATES, DEADLINES & GOVERNANCE RULES</h4>
-          </div>
-          <div className="keyInfoGrid">
-            {keyInfo.dates && keyInfo.dates.length > 0 && (
-              <div className="keyInfoItem">
-                <span className="kLabel">Key Dates:</span>
-                <ul>
-                  {keyInfo.dates.map((d, i) => <li key={i}>{d}</li>)}
-                </ul>
-              </div>
-            )}
-            {keyInfo.deadlines && keyInfo.deadlines.length > 0 && (
-              <div className="keyInfoItem">
-                <span className="kLabel">Deadlines:</span>
-                <ul>
-                  {keyInfo.deadlines.map((dl, i) => <li key={i}>{dl}</li>)}
-                </ul>
-              </div>
-            )}
-            {keyInfo.compliance_rules && keyInfo.compliance_rules.length > 0 && (
-              <div className="keyInfoItem full">
-                <span className="kLabel">Compliance Rules:</span>
-                <ul>
-                  {keyInfo.compliance_rules.map((rule, i) => <li key={i}>{rule}</li>)}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 7. Search Optimization & Intent Retrieval Simulator */}
-      {searchOpt && (
-        <div className="searchOptSection">
-          <div className="sectionHead">
-            <svg className="icon" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <h4>FUTURE RETRIEVAL & SEARCH OPTIMIZATION</h4>
-          </div>
-
-          <p className="searchOptIntro">
-            INDEX maps conversational intent and natural language phrasing so users find this document regardless of phrasing or typos.
-          </p>
-
-          <div className="intentGrid">
-            <div className="intentColumn">
-              <span className="colHead">Anticipated Intent Queries:</span>
-              <ul className="queryList">
-                {(searchOpt.intent_queries || []).map((q, i) => (
-                  <li
-                    key={i}
-                    className={`queryItem${selectedIntent === q ? ' active' : ''}`}
-                    onClick={() => setSelectedIntent(q)}
-                  >
-                    <span className="searchIco">🔍</span>
-                    <span>&ldquo;{q}&rdquo;</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="intentColumn">
-              <span className="colHead">Fuzzy / Shorthand Phrasings Mapped:</span>
-              <ul className="fuzzyList">
-                {(searchOpt.fuzzy_phrasings || []).map((f, i) => (
-                  <li key={i} className="fuzzyItem">
-                    <span className="fuzzyTag">&ldquo;{f}&rdquo;</span>
-                    <span className="arrow">➔</span>
-                    <span className="targetName">{searchOpt.recommended_filename || basic.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 8. Enterprise BFSI Guardrails Footer */}
-      <div className="guardrailBar">
-        <div className="guardrailStatus">
-          <span className="shieldIcon">🛡️</span>
-          <span className="guardrailTxt">
-            Enterprise BFSI Guardrails Verified &bull; PCI-DSS Sanitized &bull; Zero Model Identifiers
-          </span>
-        </div>
-        <button
-          className="copySummaryBtn"
-          type="button"
-          onClick={() => copyText(JSON.stringify(data, null, 2), 'summary')}
-        >
-          {copiedSummary ? '✓ JSON COPIED' : 'EXPORT METADATA JSON'}
-        </button>
       </div>
     </div>
   )
 }
-

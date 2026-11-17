@@ -912,15 +912,15 @@ header {
 
 .ai {
   align-self: flex-start;
-  width: min(100%, 760px);
-  max-width: 760px;
+  width: 100%;
+  max-width: min(92%, 880px);
   background: #051a2c;
   border: 1px solid var(--line);
   border-radius: 18px 18px 18px 5px;
   backdrop-filter: blur(18px);
-  padding: 16px 20px !important;
-  font-size: 15px;
-  line-height: 1.65;
+  padding: 18px 22px !important;
+  font-size: 14.5px;
+  line-height: 1.6;
 }
 
 .bubble.ai:has(.plainChatBubble) {
@@ -928,13 +928,13 @@ header {
   max-width: min(86%, 760px);
 }
 
-/* Thinking Indicator */
+/* Thinking Indicator (Identical to LENS & Other Agents) */
 .thinking {
   align-self: flex-start;
-  padding: 13px 16px;
+  padding: 13px 18px;
   border: 1px solid var(--line);
   border-radius: 18px 18px 18px 5px;
-  background: #0e1017;
+  background: var(--panel);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -944,27 +944,25 @@ header {
 .thinkName {
   font-weight: 800;
   letter-spacing: 3px;
-  font-size: 14px;
-  background: linear-gradient(90deg, #fff, var(--a1), var(--cyan));
-  background-size: 220% auto;
+  font-size: 13px;
+  background: linear-gradient(90deg, #fff, #078cff);
   -webkit-background-clip: text;
   color: transparent;
-  animation: flow 1s linear infinite;
 }
 
 .bars {
-  height: 16px;
+  height: 18px;
   display: flex;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
 }
 
 .bars i {
   display: block;
-  width: 2px;
-  height: 4px;
+  width: 3px;
+  height: 6px;
   border-radius: 3px;
-  background: var(--a1);
+  background: #078cff;
   animation: wave 0.75s ease-in-out infinite;
 }
 
@@ -2694,4 +2692,289 @@ html, body {
 
 .attachRemove:hover {
   color: #ffffff;
+}
+
+
+/* ==========================================================================
+   INDEX 30+ ENTERPRISE METADATA REGISTRY TABLE & FILTER BAR
+   ========================================================================== */
+
+.idxRegistrySection {
+  background: rgba(2, 12, 22, 0.65);
+  border: 1px solid rgba(7, 140, 255, 0.25);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.idxRegistryHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.idxExportBtns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.idxActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: rgba(7, 140, 255, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(7, 140, 255, 0.35);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.idxActionBtn:hover {
+  background: rgba(7, 140, 255, 0.24);
+  color: #ffffff;
+  border-color: #078cff;
+}
+
+.idxFilterBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.idxFilterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: rgba(5, 26, 44, 0.75);
+  color: #94a3b8;
+  border: 1px solid rgba(7, 140, 255, 0.22);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.idxFilterPill:hover {
+  color: #e2e8f0;
+  border-color: rgba(7, 140, 255, 0.45);
+}
+
+.idxFilterPill.active {
+  background: rgba(7, 140, 255, 0.18);
+  color: #ffffff;
+  border-color: #078cff;
+  box-shadow: 0 4px 14px rgba(7, 140, 255, 0.22);
+}
+
+.idxFilterCount {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(7, 140, 255, 0.2);
+  color: #38bdf8;
+}
+
+.idxFilterPill.active .idxFilterCount {
+  background: #078cff;
+  color: #020c16;
+}
+
+.idxTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(7, 140, 255, 0.24);
+  background: rgba(3, 15, 27, 0.85);
+}
+
+.idxMetadataTable,
+.bubble table.idxMetadataTable {
+  display: table !important;
+  width: 100% !important;
+  min-width: 640px;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+  table-layout: auto !important;
+}
+
+.idxMetadataTable th,
+.idxMetadataTable td,
+.bubble .idxMetadataTable th,
+.bubble .idxMetadataTable td {
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+}
+
+.idxMetadataTable thead tr {
+  background: rgba(7, 140, 255, 0.14);
+  border-bottom: 1px solid rgba(7, 140, 255, 0.3);
+}
+
+.idxMetadataTable th {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #7dd3fc;
+  white-space: nowrap !important;
+}
+
+.idxMetadataTable tbody tr {
+  border-bottom: 1px solid rgba(7, 140, 255, 0.12);
+  transition: background 0.15s ease;
+}
+
+.idxMetadataTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.idxMetadataTable tbody tr:hover {
+  background: rgba(7, 140, 255, 0.07);
+}
+
+.idxMetadataTable td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+.idxColCat,
+.idxColKey {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+.idxCatBadge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(7, 140, 255, 0.12);
+  color: #7dd3fc;
+  border: 1px solid rgba(7, 140, 255, 0.28);
+  white-space: nowrap !important;
+}
+
+.idxColKey code {
+  font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: #38bdf8;
+  background: rgba(2, 12, 22, 0.8);
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(7, 140, 255, 0.22);
+  white-space: nowrap !important;
+}
+
+.idxColLabel strong {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.idxValWrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.idxValWrap span {
+  color: #f0f7ff;
+  font-weight: 500;
+}
+
+.idxRowCopyBtn {
+  opacity: 0.45;
+  background: rgba(7, 140, 255, 0.12);
+  border: 1px solid rgba(7, 140, 255, 0.3);
+  color: #38bdf8;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.idxMetadataTable tbody tr:hover .idxRowCopyBtn,
+.idxRowCopyBtn:hover {
+  opacity: 1;
+}
+
+.idxRowCopyBtn:hover {
+  background: #078cff;
+  color: #020c16;
+}
+
+
+/* Download Dropdown Menu */
+.idxDropdownWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.idxDropdownMenu {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  min-width: 100%;
+  width: max-content;
+  background: #041525;
+  border: 1px solid rgba(7, 140, 255, 0.42);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.65);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.idxDropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.idxDropdownItem:hover {
+  background: rgba(7, 140, 255, 0.22);
+  color: #38bdf8;
 }

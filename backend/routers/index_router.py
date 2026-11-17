@@ -121,7 +121,7 @@ async def tag_content(
     if not combined_text.strip():
         raise HTTPException(status_code=400, detail='Please provide document text or upload a file to tag.')
 
-    result = index_service.extract_metadata(combined_text, file_name=file_name, history=history)
+    result = index_service.extract_metadata(combined_text, file_name=file_name, history=history, doc_meta=doc_meta)
     if doc_meta:
         result['document_metadata'] = doc_meta
 

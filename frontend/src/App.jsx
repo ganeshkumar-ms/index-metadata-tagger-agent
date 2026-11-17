@@ -506,13 +506,17 @@ export default function App() {
               {attachedFile && (
                 <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '14px' }}>
                   <div className="filePill show">
-                    <span>📎 Attached: {attachedFile.name}</span>
+                    <svg className="icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d="m21.4 11.6-8.9 8.9a6 6 0 0 1-8.5-8.5l9.3-9.3a4 4 0 0 1 5.7 5.7l-9.3 9.3a2 2 0 0 1-2.8-2.8l8.6-8.6" />
+                    </svg>
+                    <span>Attached: {attachedFile.name}</span>
                     <button
                       style={{ background: 'none', border: 0, color: '#fca5a5', cursor: 'pointer', marginLeft: 8 }}
                       onClick={() => setAttachedFile(null)}
                       type="button"
+                      aria-label="Remove attachment"
                     >
-                      ✕
+                      ×
                     </button>
                   </div>
                 </div>
@@ -648,10 +652,15 @@ export default function App() {
               <div className="messages" ref={messagesContainerRef}>
                 {messages.length === 0 && !isThinking && (
                   <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--muted)', maxWidth: 440 }}>
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>🏷️</div>
-                    <h3 style={{ color: '#fff', margin: '0 0 8px' }}>Metadata Tagger Workspace</h3>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, color: 'var(--a1)' }}>
+                      <svg className="icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                        <line x1="7" y1="7" x2="7.01" y2="7" />
+                      </svg>
+                    </div>
+                    <h3 style={{ color: '#fff', margin: '0 0 8px' }}>Enterprise Metadata Extraction Workspace</h3>
                     <p style={{ fontSize: 14, lineHeight: 1.6 }}>
-                      Upload any poorly named file (<code style={{ color: 'var(--cyan)' }}>DOC_48383_FINAL_V2.pdf</code>) or paste document content to extract multi-dimensional taxonomy, dynamic attributes, and retrieval queries.
+                      Upload any document, picture, or poorly named file (<code style={{ color: 'var(--cyan)' }}>DOC_48383_FINAL_V2.pdf</code>) to extract 30+ standard enterprise metadata attributes, technical forensics, and retrieval queries.
                     </p>
                   </div>
                 )}
@@ -677,13 +686,18 @@ export default function App() {
                           >
                             <div className="userFileHeader">
                               <div className="userFileLeft">
-                                <span className="userFileIcon" aria-hidden="true">📄</span>
+                                <span className="userFileIcon" aria-hidden="true">
+                                  <svg className="icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                  </svg>
+                                </span>
                                 <div className="userFileInfo">
                                   <span className="userFileName" title={msg.fileName}>{msg.fileName}</span>
-                                  <span className="userFileMeta">{msg.fileSize || 'DOCUMENT'}</span>
+                                  <span className="userFileMeta">{msg.fileSize || 'ASSET'}</span>
                                 </div>
                               </div>
-                              <span className="userFileViewBtn">Open ↗</span>
+                              <span className="userFileViewBtn">Open</span>
                             </div>
                           </button>
                         )}
@@ -708,15 +722,12 @@ export default function App() {
                   )
                 })}
 
-                {/* Thinking Indicator */}
+                {/* Thinking Indicator (Matches LENS & Other Agents) */}
                 {isThinking && (
                   <div className="thinking">
                     <span className="thinkName">INDEX</span>
                     <span className="bars">
                       <i /><i /><i /><i />
-                    </span>
-                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>
-                      Analyzing document & generating multi-dimensional metadata...
                     </span>
                   </div>
                 )}
@@ -750,7 +761,6 @@ export default function App() {
                       ref={chatFileInputRef}
                       type="file"
                       className="fileInput"
-                      accept=".pdf,.docx,.txt,.csv,.json,.xml,.html,.md"
                       onChange={e => {
                         const f = e.target.files?.[0]
                         if (f) setAttachedFile(f)

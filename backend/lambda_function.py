@@ -259,7 +259,7 @@ def lambda_handler(event, context):
             return _json_response(400, {'detail': 'Please provide document text or upload a file to tag.'})
 
         try:
-            result = index_service.extract_metadata(combined_text, file_name=file_name, history=history)
+            result = index_service.extract_metadata(combined_text, file_name=file_name, history=history, doc_meta=doc_meta)
         except Exception as e:
             import traceback
             traceback.print_exc()

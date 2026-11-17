@@ -1,7 +1,11 @@
 import collections
 import csv
+import hashlib
 import io
+import math
+import mimetypes
 import re
+import struct
 import sys
 import types
 import zipfile
@@ -238,6 +242,86 @@ def _detect_image_format(file_bytes: bytes, ext: str) -> str:
     return 'jpeg'
 
 
+def _extract_image_forensics(file_bytes: bytes, ext: str) -> dict:
+    """Extracts exact width, height, aspect ratio, bit depth, color space, and compression from image bytes."""
+    fmt = _detect_image_format(file_bytes, ext).upper()
+    width, height = 0, 0
+    bit_depth = '8-bit per channel'
+    color_space = 'sRGB (24-bit TrueColor)'
+    compression = f'{fmt} Standard Compression'
+
+    try:
+        if file_bytes.startswith(b'\x89PNG\r\n\x1a\n') and len(file_bytes) >= 26:
+            width, height = struct.unpack('>II', file_bytes[16:24])
+            bd = file_bytes[24]
+            ct = file_bytes[25]
+            bit_depth = f'{bd}-bit per channel'
+            color_map = {
+                0: 'Grayscale',
+                2: 'sRGB TrueColor (24-bit)',
+                3: 'Indexed Palette Color',
+                4: 'Grayscale + Alpha',
+                6: 'sRGB + Alpha Channel (32-bit RGBA)'
+            }
+            color_space = color_map.get(ct, 'sRGB')
+            compression = 'Lossless Deflate (PNG LZ77)'
+        elif file_bytes.startswith((b'GIF87a', b'GIF89a')) and len(file_bytes) >= 10:
+            width, height = struct.unpack('<HH', file_bytes[6:10])
+            color_space = '8-bit Indexed Palette (256 Colors)'
+            compression = 'Lossless LZW'
+        elif file_bytes.startswith(b'\xff\xd8'):
+            compression = 'DCT Baseline / Progressive (JPEG)'
+            color_space = 'YCbCr / sRGB (24-bit)'
+            idx = 2
+            n = len(file_bytes)
+            while idx < n - 9:
+                if file_bytes[idx] != 0xFF:
+                    idx += 1
+                    continue
+                marker = file_bytes[idx + 1]
+                if marker == 0xFF:
+                    idx += 1
+                    continue
+                if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                    precision = file_bytes[idx + 4]
+                    height, width = struct.unpack('>HH', file_bytes[idx + 5:idx + 9])
+                    channels = file_bytes[idx + 9] if idx + 9 < n else 3
+                    bit_depth = f'{precision}-bit ({channels} channels)'
+                    color_space = 'CMYK (32-bit)' if channels == 4 else ('Grayscale' if channels == 1 else 'sRGB / YCbCr (24-bit)')
+                    break
+                if marker in (0xD8, 0xD9) or (0xD0 <= marker <= 0xD7):
+                    idx += 2
+                else:
+                    seg_len = struct.unpack('>H', file_bytes[idx + 2:idx + 4])[0]
+                    if seg_len < 2:
+                        break
+                    idx += 2 + seg_len
+        elif file_bytes.startswith(b'RIFF') and file_bytes[8:12] == b'WEBP' and len(file_bytes) >= 30:
+            compression = 'WebP VP8 / VP8L'
+            chunk_type = file_bytes[12:16]
+            if chunk_type == b'VP8X' and len(file_bytes) >= 30:
+                width = 1 + int.from_bytes(file_bytes[24:27], 'little')
+                height = 1 + int.from_bytes(file_bytes[27:30], 'little')
+    except Exception:
+        pass
+
+    info = {
+        'image_format': fmt,
+        'color_space': color_space,
+        'bit_depth': bit_depth,
+        'compression': compression,
+    }
+    if width > 0 and height > 0:
+        g = math.gcd(width, height) or 1
+        info['width'] = width
+        info['height'] = height
+        info['resolution'] = f'{width} × {height} px'
+        info['aspect_ratio'] = f'{width // g}:{height // g}'
+        info['megapixels'] = f'{round((width * height) / 1_000_000, 2)} MP'
+        info['orientation'] = 'Landscape' if width > height else ('Portrait' if height > width else 'Square (1:1)')
+    return info
+
+
 def _analyze_image_with_bedrock(file_bytes: bytes, ext: str) -> str:
     """Uses Amazon Bedrock Nova Pro Vision to read and describe images, photos, ID cards, diagrams, or screenshots."""
     if len(file_bytes) == 0 or len(file_bytes) > 4_800_000:
@@ -254,9 +338,11 @@ def _analyze_image_with_bedrock(file_bytes: bytes, ext: str) -> str:
                 'content': [
                     {'image': {'format': fmt, 'source': {'bytes': file_bytes}}},
                     {'text': (
-                        'Examine this image thoroughly. '
+                        'Examine this image thoroughly for Enterprise Metadata Extraction. '
                         '1) Transcribe ALL visible text, labels, headings, numbers, IDs, code snippets, or table contents verbatim. '
-                        '2) Describe clearly what this image/document is so it can be classified with 100% accuracy.'
+                        '2) Identify the exact Visual Artifact Type (e.g. Application UI Screenshot, Architecture Diagram, Scanned Document, Invoice/Receipt, Photograph, Chart/Dashboard, Certificate/ID). '
+                        '3) Describe the Visual Composition, Layout Structure, Dominant Color Palette, Contrast Profile, and Visual Elements/Objects detected. '
+                        '4) State the Industry Domain, Target Audience, Subject Matter, and Operational Purpose of this image.'
                     )}
                 ]
             }],
@@ -485,9 +571,20 @@ def extract_text(file_bytes: bytes, filename: str, total_size_override: int = No
     ext = Path(filename).suffix.lower()
     kind = file_kind(filename, file_bytes)
     actual_size = total_size_override if total_size_override is not None else len(file_bytes)
-    meta = {'filename': filename, 'type': ext or 'unknown', 'kind': kind, 'size_bytes': actual_size}
+    mime_guess, _ = mimetypes.guess_type(filename)
+    sha256_hash = hashlib.sha256(file_bytes).hexdigest() if file_bytes else ''
+    meta = {
+        'filename': filename,
+        'type': ext or 'unknown',
+        'kind': kind,
+        'size_bytes': actual_size,
+        'mime_type': mime_guess or ('image/png' if kind == 'image' else 'application/octet-stream'),
+        'sha256': sha256_hash,
+    }
     if kind == 'code':
         meta['language'] = CODE_LANGS[ext]
+    elif kind == 'image' and file_bytes:
+        meta.update(_extract_image_forensics(file_bytes, ext))
 
     text = ''
     note = ''
