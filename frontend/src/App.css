@@ -487,7 +487,7 @@ header {
 .layout {
   height: 100%;
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 280px 1fr;
   grid-template-rows: minmax(0, 1fr);
 }
 
@@ -496,51 +496,54 @@ header {
   border-right: 1px solid var(--line);
   background: #051a2c;
   backdrop-filter: blur(24px);
-  padding: 21px 13px;
+  padding: 20px 14px;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  width: 300px;
+  width: 280px;
   animation: side 0.5s both;
 }
 
 .side .word {
-  padding: 6px 8px 27px;
+  padding: 4px 8px 20px;
   display: block;
 }
 
 .new {
-  border: 1px solid rgba(7, 140, 255, 0.4);
-  background: rgba(7, 140, 255, 0.12);
-  color: #72bdff;
-  border-radius: 13px;
-  padding: 12px;
+  border: 1px solid rgba(7, 140, 255, 0.45);
+  background: rgba(7, 140, 255, 0.13);
+  color: #f0f7ff;
+  border-radius: 12px;
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  width: 100%;
+  padding: 0 14px;
   text-align: left;
   font-size: 12px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: 0.25s;
+  gap: 9px;
+  transition: 0.2s;
   flex-shrink: 0;
 }
 
 .new:hover {
-  background: rgba(7, 140, 255, 0.25);
+  background: rgba(7, 140, 255, 0.26);
   border-color: var(--a1);
   color: #fff;
-  transform: translateY(-1px);
 }
 
 .label {
-  margin: 26px 9px 9px;
+  margin: 22px 8px 10px;
   color: var(--muted);
   font-size: 12px;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.4px;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -873,10 +876,10 @@ header {
 
 /* Chat Bubbles */
 .bubble {
-  max-width: min(76%, 680px);
-  padding: 13px 16px;
-  font-size: 16px;
-  line-height: 1.6;
+  max-width: min(86%, 760px);
+  padding: 15px 18px;
+  font-size: 15px;
+  line-height: 1.65;
   animation: bubble 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
   word-break: break-word;
 }
@@ -890,7 +893,9 @@ header {
   color: #f0f7ff !important;
   border-radius: 18px 18px 5px 18px !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  max-width: min(88%, 680px);
+  max-width: min(86%, 760px);
+  font-size: 15px;
+  line-height: 1.65;
 }
 
 .user .userDocPill {
@@ -907,13 +912,20 @@ header {
 
 .ai {
   align-self: flex-start;
-  width: 100%;
-  max-width: 860px;
+  width: min(100%, 760px);
+  max-width: 760px;
   background: #051a2c;
   border: 1px solid var(--line);
   border-radius: 18px 18px 18px 5px;
   backdrop-filter: blur(18px);
-  padding: 18px 24px !important;
+  padding: 16px 20px !important;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.bubble.ai:has(.plainChatBubble) {
+  width: fit-content;
+  max-width: min(86%, 760px);
 }
 
 /* Thinking Indicator */
@@ -1079,22 +1091,22 @@ header {
    INDEX RESULT CARD STYLING
    ===================================================================== */
 .indexResultCard {
-  padding: 24px;
+  padding: 0 !important;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 16px;
 }
 
 .cardHeaderBlock {
   border-bottom: 1px solid var(--line);
-  padding-bottom: 20px;
+  padding-bottom: 16px;
 }
 
 .cardBadgeRow {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .typeBadge {
@@ -1102,7 +1114,7 @@ header {
   color: #fff;
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -1114,7 +1126,7 @@ header {
   color: var(--cyan);
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
 }
 
@@ -1124,7 +1136,7 @@ header {
   color: #c4d7ec;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 .originalFileBadge {
@@ -1132,7 +1144,7 @@ header {
   color: var(--muted);
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 11.5px;
+  font-size: 11px;
   max-width: 250px;
   white-space: nowrap;
   overflow: hidden;
@@ -1140,18 +1152,18 @@ header {
 }
 
 .docTitle {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 17px !important;
+  font-weight: 700 !important;
   color: #fff;
-  margin: 0 0 10px;
+  margin: 0 0 8px !important;
   word-break: break-word;
 }
 
 .docSummary {
   color: #cbd5e1;
-  font-size: 15px;
-  line-height: 1.6;
-  margin: 0 0 16px;
+  font-size: 13.5px !important;
+  line-height: 1.55 !important;
+  margin: 0 0 12px !important;
   word-break: break-word;
 }
 
@@ -1745,7 +1757,7 @@ header {
   left: 0;
   top: 0;
   bottom: 0;
-  width: min(80vw, 300px) !important;
+  width: min(80vw, 280px) !important;
   transform: translateX(-104%);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
   box-shadow: 20px 0 60px rgba(0, 0, 0, 0.7) !important;
@@ -2001,43 +2013,43 @@ header {
 
 
 /* Unified Elevated Sidebar Readability Standard */
-.side .new { font-size: 12.5px !important; }
-.side .label { font-size: 12px !important; }
+.side .new { font-size: 12px !important; height: 38px !important; min-height: 38px !important; }
+.side .label { font-size: 11.5px !important; }
 .histRow:not(.confirm):not(.confirming):not(.editing) {
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
 }
 .histRow .hist,
 .histRow .histTitle {
-  font-size: 14.5px !important;
+  font-size: 13.5px !important;
 }
-.histEmpty { font-size: 13.5px !important; }
-.histConfirmTxt { font-size: 12.5px !important; }
+.histEmpty { font-size: 13px !important; }
+.histConfirmTxt { font-size: 12px !important; }
 .histBtn { font-size: 12px !important; }
-.histInput { font-size: 14px !important; }
+.histInput { font-size: 13px !important; }
 .side .foot { font-size: 12px !important; }
 
 
 /* Sidebar Anti-Overlay Truncation & Frosted Blur Action Bar */
 .histRow:not(.confirm):not(.confirming):not(.editing) {
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
 }
 .histRow .hist,
 .histRow .histTitle {
   display: block !important;
   width: 100% !important;
-  height: 40px !important;
-  line-height: 40px !important;
+  height: 38px !important;
+  line-height: 38px !important;
   padding: 0 14px 0 12px !important;
   margin: 0 !important;
   border: 0 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  font-size: 14.5px !important;
+  font-size: 13.5px !important;
   text-align: left !important;
   box-sizing: border-box !important;
 }
@@ -2165,7 +2177,7 @@ html, body {
     left: 0;
     top: 0;
     bottom: 0;
-    width: min(80vw, 300px) !important;
+    width: min(80vw, 280px) !important;
     height: 100dvh !important;
     transform: translateX(-104%) !important;
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
