@@ -91,6 +91,7 @@ function loadSessions() {
         return { ...s, title, messages }
       })
       .filter(s => (s.messages || []).length > 0)
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
   } catch {
     return []
   }
@@ -231,6 +232,15 @@ export default function App() {
 
   const currentSession = sessions.find(s => s.id === currentSessionId)
 
+  const goHome = () => {
+    setDrawerOpen(false)
+    setViewerDoc(null)
+    setCurrentSessionId(null)
+    setMessages([])
+    setAttachedFiles([])
+    setView('home')
+  }
+
   const openNewChat = (initialText = '', file = null) => {
     sessionJustChangedRef.current = true
     if (initialText || file) {
@@ -318,18 +328,21 @@ export default function App() {
 
     if (!content && !file) return
 
-    let activeId = targetSessionId
-    if (!activeId) {
-      const newSession = {
-        id: generateId(),
-        title: formatSmartTitle(content, file?.name),
-        timestamp: new Date().toISOString(),
-        date: 'TODAY',
-        messages: []
-      }
-      activeId = newSession.id
-      setSessions(prev => [newSession, ...prev])
+    const isHomeStart = view === 'home' || !targetSessionId
+    let activeId = (!isHomeStart && targetSessionId) ? targetSessionId : generateId()
+    if (isHomeStart) {
       setCurrentSessionId(activeId)
+      setView('chat')
+    }
+
+    const initialTitle = formatSmartTitle(content, file?.name)
+    const newSession = {
+      id: activeId,
+      title: initialTitle,
+      timestamp: new Date().toISOString(),
+      date: 'TODAY',
+      updatedAt: Date.now(),
+      messages: []
     }
 
     const userMessage = {
@@ -380,26 +393,27 @@ export default function App() {
       setMessages(prev => {
         const withUpdatedUser = prev.map(m => m.id === userMessage.id ? updatedUserMsg : m)
         const next = [...withUpdatedUser, aiMessage]
-        setSessions(sPrev => sPrev.map(s => {
-          if (s.id === activeId) {
-            let updatedTitle = s.title
-            if (!s.titleLocked) {
-              if (response.data?.basic?.title) {
-                updatedTitle = shorten(response.data.basic.title, 48)
-              } else if (file) {
-                updatedTitle = formatSmartTitle('', file.name)
-              } else if (content && !isGenericGreeting(content)) {
-                updatedTitle = formatSmartTitle(content)
-              }
-            }
-            return {
-              ...s,
-              title: updatedTitle,
-              messages: next
+        setSessions(sPrev => {
+          const target = sPrev.find(s => s.id === activeId)
+          if (!target) return sPrev
+          let updatedTitle = target.title
+          if (!target.titleLocked) {
+            if (response.data?.basic?.title) {
+              updatedTitle = shorten(response.data.basic.title, 48)
+            } else if (file) {
+              updatedTitle = formatSmartTitle('', file.name)
+            } else if (content && !isGenericGreeting(content)) {
+              updatedTitle = formatSmartTitle(content)
             }
           }
-          return s
-        }))
+          const updated = {
+            ...target,
+            title: updatedTitle,
+            updatedAt: Date.now(),
+            messages: next
+          }
+          return [updated, ...sPrev.filter(s => s.id !== activeId)]
+        })
         return next
       })
     } catch (err) {
@@ -431,7 +445,7 @@ export default function App() {
       {view === 'home' && (
         <section id="home">
           <header>
-            <div className="word">INDEX</div>
+            <div className="word" onClick={goHome} style={{ cursor: 'pointer' }}>INDEX</div>
             <button className="enter" onClick={() => openNewChat()} type="button">
               ENTER WORKSPACE ↗
             </button>
@@ -634,10 +648,7 @@ export default function App() {
                   <button
                     className="ghost"
                     type="button"
-                    onClick={() => {
-                      setDrawerOpen(false)
-                      setView('home')
-                    }}
+                    onClick={goHome}
                   >
                     <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, marginRight: 6 }}>
                       <path d="m3 10 9-7 9 7" />
