@@ -751,7 +751,11 @@ export default function App() {
                       type="file"
                       className="fileInput"
                       accept=".pdf,.docx,.txt,.csv,.json,.xml,.html,.md"
-                      onChange={handleChatFile}
+                      onChange={e => {
+                        const f = e.target.files?.[0]
+                        if (f) setAttachedFile(f)
+                        e.target.value = ''
+                      }}
                     />
                     <button
                       className="plus"
@@ -765,15 +769,15 @@ export default function App() {
                       </svg>
                     </button>
                     <input
-                      ref={chatInputRef}
-                      value={chatInput}
-                      onChange={e => setChatInput(e.target.value)}
+                      value={inputText}
+                      onChange={e => setInputText(e.target.value)}
                       placeholder="Message INDEX or attach a document..."
                       maxLength={1000}
                       autoComplete="off"
                       aria-label="Message"
+                      disabled={isThinking}
                     />
-                    <button className="chatSend" type="submit" aria-label="Send" disabled={isThinking}>
+                    <button className="chatSend" type="submit" aria-label="Send" disabled={isThinking || (!inputText.trim() && !attachedFile)}>
                       <svg className="icon" viewBox="0 0 24 24">
                         <path d="M5 12h13" />
                         <path d="m13 7 5 5-5 5" />
