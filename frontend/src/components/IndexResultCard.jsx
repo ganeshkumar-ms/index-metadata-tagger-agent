@@ -307,35 +307,10 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
 
   return (
     <div className="indexResultCard">
-      {/* 0. GUARDRAILS STATUS BAR & TOP-RIGHT TRACE ID */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          marginBottom: '6px',
-          width: '100%',
-          flexWrap: 'wrap'
-        }}
-      >
+      {/* 0. GUARDRAILS STATUS BAR & TRACE ID */}
+      <div className="idxTopMetaRow">
         <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 12px',
-            borderRadius: '999px',
-            fontSize: '11.5px',
-            fontWeight: 700,
-            background: guardrails?.status === 'BLOCKED'
-              ? 'rgba(239, 68, 68, 0.22)'
-              : 'rgba(52, 211, 153, 0.16)',
-            color: guardrails?.status === 'BLOCKED' ? '#f87171' : '#34d399',
-            border: guardrails?.status === 'BLOCKED'
-              ? '1px solid rgba(239, 68, 68, 0.65)'
-              : '1px solid rgba(52, 211, 153, 0.45)'
-          }}
+          className={`idxGuardrailPill ${guardrails?.status === 'BLOCKED' ? 'blocked' : 'passed'}`}
         >
           <ShieldIcon />
           <span>
@@ -348,22 +323,7 @@ export default function IndexResultCard({ data, guardrails, fileName, documentMe
         </span>
 
         {traceId && (
-          <span
-            style={{
-              fontSize: '11px',
-              fontFamily: 'ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace',
-              fontWeight: 600,
-              color: '#38bdf8',
-              letterSpacing: '0.6px',
-              padding: '3px 9px',
-              borderRadius: '6px',
-              background: 'rgba(7, 140, 255, 0.08)',
-              border: '1px solid rgba(7, 140, 255, 0.24)',
-              marginLeft: 'auto',
-              flexShrink: 0
-            }}
-            title="Verification Trace Code"
-          >
+          <span className="idxTraceBadge" title="Verification Trace Code">
             {traceId}
           </span>
         )}

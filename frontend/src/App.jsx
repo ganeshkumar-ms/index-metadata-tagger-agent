@@ -237,7 +237,7 @@ export default function App() {
     setViewerDoc(null)
     setCurrentSessionId(null)
     setMessages([])
-    setAttachedFiles([])
+    setAttachedFile(null)
     setView('home')
   }
 
