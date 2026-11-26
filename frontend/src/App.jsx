@@ -205,13 +205,6 @@ export default function App() {
     }
     setViewerDoc(toViewerDoc(target))
   }
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.self !== window.top) {
-      document.documentElement.classList.add('in-iframe')
-    }
-  }, [])
-
   useEffect(() => {
     setViewerDoc(null)
   }, [currentSessionId])
