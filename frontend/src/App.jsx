@@ -97,12 +97,52 @@ function loadSessions() {
   }
 }
 
+function stripHeavyBlobs(sessions, dropAllPreviews = false) {
+  return (sessions || [])
+    .filter(s => (s.messages || []).length > 0)
+    .map(s => ({
+      ...s,
+      messages: (s.messages || []).map(m => {
+        const cleanDocMeta = m.documentMetadata
+          ? {
+              ...m.documentMetadata,
+              preview: dropAllPreviews
+                ? ''
+                : typeof m.documentMetadata.preview === 'string' && m.documentMetadata.preview.length > 60000
+                  ? m.documentMetadata.preview.slice(0, 60000)
+                  : m.documentMetadata.preview
+            }
+          : m.documentMetadata
+        const cleanFile = m.file
+          ? {
+              name: m.file.name,
+              filename: m.file.filename || m.file.name,
+              size: m.file.size,
+              url: m.file.url,
+              view_url: m.file.view_url
+            }
+          : m.file
+        return {
+          ...m,
+          isNew: false,
+          documentMetadata: cleanDocMeta,
+          file: cleanFile
+        }
+      })
+    }))
+}
+
 function saveSessions(sessions) {
   try {
-    const valid = (sessions || []).filter(s => (s.messages || []).length > 0)
+    const valid = stripHeavyBlobs(sessions, false)
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(valid))
   } catch {
-    // ignore
+    try {
+      const compact = stripHeavyBlobs(sessions, true).slice(0, 25)
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(compact))
+    } catch {
+      // ignore if storage is disabled
+    }
   }
 }
 
@@ -126,6 +166,9 @@ function getPreview(messages) {
   const lastAi = [...messages].reverse().find(m => m.role === 'ai')
   if (lastAi?.data?.summary) {
     return lastAi.data.summary.slice(0, 85) + (lastAi.data.summary.length > 85 ? '...' : '')
+  }
+  if (lastAi?.data?.message) {
+    return lastAi.data.message.slice(0, 85) + (lastAi.data.message.length > 85 ? '...' : '')
   }
   const fileMsg = messages.find(m => m.fileName || m.file?.name)
   if (fileMsg) {
@@ -243,29 +286,15 @@ export default function App() {
 
   const openNewChat = (initialText = '', file = null) => {
     sessionJustChangedRef.current = true
+    setDrawerOpen(false)
+    setEditingTitle(false)
     if (initialText || file) {
-      const newId = generateId()
-      const newSession = {
-        id: newId,
-        title: formatSmartTitle(initialText, file?.name),
-        timestamp: new Date().toISOString(),
-        date: 'TODAY',
-        messages: []
-      }
-      setSessions(prev => [newSession, ...prev])
-      setCurrentSessionId(newId)
-      setMessages([])
-      setView('chat')
-      setDrawerOpen(false)
-      setEditingTitle(false)
-      handleSend(initialText, file, newId)
+      handleSend(initialText, file, null)
     } else {
-      // Blank draft: NO empty session stored in history until user actually sends a message!
+      // Blank draft: NO empty session stored in history until user actually sends a message
       setCurrentSessionId(null)
       setMessages([])
       setView('chat')
-      setDrawerOpen(false)
-      setEditingTitle(false)
     }
   }
 
@@ -300,17 +329,28 @@ export default function App() {
   }
 
   const deleteSession = (id) => {
+    const idx = sessionsRef.current.findIndex(s => s.id === id)
     const next = sessionsRef.current.filter(s => s.id !== id)
     sessionsRef.current = next
     saveSessions(next)
     setSessions(next)
 
     if (id === currentSessionId) {
-      setCurrentSessionId(null)
-      setMessages([])
-      setView('chat')
-      setDrawerOpen(false)
-      setEditingTitle(false)
+      if (next.length > 0) {
+        const nextSess = next[idx >= 0 && idx < next.length ? idx : next.length - 1]
+        sessionJustChangedRef.current = true
+        setCurrentSessionId(nextSess.id)
+        setMessages(nextSess.messages || [])
+        setView('chat')
+        setDrawerOpen(false)
+        setEditingTitle(false)
+      } else {
+        setCurrentSessionId(null)
+        setMessages([])
+        setView('chat')
+        setDrawerOpen(false)
+        setEditingTitle(false)
+      }
     }
   }
 
@@ -328,9 +368,9 @@ export default function App() {
 
     if (!content && !file) return
 
-    const isHomeStart = view === 'home' || !targetSessionId
-    let activeId = (!isHomeStart && targetSessionId) ? targetSessionId : generateId()
-    if (isHomeStart) {
+    const isFreshSession = view === 'home' || !targetSessionId
+    const activeId = isFreshSession ? generateId() : targetSessionId
+    if (isFreshSession) {
       setCurrentSessionId(activeId)
       setView('chat')
     }
@@ -353,15 +393,29 @@ export default function App() {
       fileSize: file ? `${(file.size / 1024).toFixed(1)} KB` : null
     }
 
-    setMessages(prev => [...prev, userMessage])
+    const baseMsgs = (!isFreshSession && currentSession && currentSession.id === activeId)
+      ? (currentSession.messages || [])
+      : (isFreshSession ? [] : messages)
+    const nextMessages = [...baseMsgs, userMessage]
+
+    setMessages(nextMessages)
     setInputText('')
     setAttachedFile(null)
     setIsThinking(true)
 
+    // Immediately register/update the session so it persists right away in sidebar & localStorage
+    setSessions(sPrev => {
+      const existing = sPrev.find(s => s.id === activeId)
+      const updated = existing
+        ? { ...existing, updatedAt: Date.now(), messages: nextMessages }
+        : { ...newSession, messages: nextMessages }
+      return [updated, ...sPrev.filter(s => s.id !== activeId)]
+    })
+
     // Build history for API
-    const history = messages.map(m => ({
+    const history = baseMsgs.map(m => ({
       role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.role === 'user' ? m.text : (m.data?.summary || 'Indexed document')
+      content: m.role === 'user' ? m.text : (m.data?.summary || m.data?.message || 'Indexed document')
     }))
 
     try {
@@ -390,31 +444,28 @@ export default function App() {
         isNew: true
       }
 
-      setMessages(prev => {
-        const withUpdatedUser = prev.map(m => m.id === userMessage.id ? updatedUserMsg : m)
-        const next = [...withUpdatedUser, aiMessage]
-        setSessions(sPrev => {
-          const target = sPrev.find(s => s.id === activeId)
-          if (!target) return sPrev
-          let updatedTitle = target.title
-          if (!target.titleLocked) {
-            if (response.data?.basic?.title) {
-              updatedTitle = shorten(response.data.basic.title, 48)
-            } else if (file) {
-              updatedTitle = formatSmartTitle('', file.name)
-            } else if (content && !isGenericGreeting(content)) {
-              updatedTitle = formatSmartTitle(content)
-            }
+      const finalMessages = [...nextMessages.slice(0, -1), updatedUserMsg, aiMessage]
+      setMessages(finalMessages)
+
+      setSessions(sPrev => {
+        const target = sPrev.find(s => s.id === activeId) || newSession
+        let updatedTitle = target.title
+        if (!target.titleLocked) {
+          if (response.data?.basic?.title) {
+            updatedTitle = shorten(response.data.basic.title, 48)
+          } else if (file) {
+            updatedTitle = formatSmartTitle('', file.name)
+          } else if (content && !isGenericGreeting(content)) {
+            updatedTitle = formatSmartTitle(content)
           }
-          const updated = {
-            ...target,
-            title: updatedTitle,
-            updatedAt: Date.now(),
-            messages: next
-          }
-          return [updated, ...sPrev.filter(s => s.id !== activeId)]
-        })
-        return next
+        }
+        const updated = {
+          ...target,
+          title: updatedTitle,
+          updatedAt: Date.now(),
+          messages: finalMessages
+        }
+        return [updated, ...sPrev.filter(s => s.id !== activeId)]
       })
     } catch (err) {
       const errorMsg = {
@@ -426,10 +477,12 @@ export default function App() {
         },
         isNew: true
       }
-      setMessages(prev => {
-        const next = [...prev, errorMsg]
-        setSessions(sPrev => sPrev.map(s => s.id === activeId ? { ...s, messages: next } : s))
-        return next
+      const errMessages = [...nextMessages, errorMsg]
+      setMessages(errMessages)
+      setSessions(sPrev => {
+        const target = sPrev.find(s => s.id === activeId) || newSession
+        const updated = { ...target, updatedAt: Date.now(), messages: errMessages }
+        return [updated, ...sPrev.filter(s => s.id !== activeId)]
       })
     } finally {
       setIsThinking(false)
@@ -662,16 +715,16 @@ export default function App() {
               {/* Single Scrollable Messages Container */}
               <div className="messages" ref={messagesContainerRef}>
                 {messages.length === 0 && !isThinking && (
-                  <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--muted)', maxWidth: 440 }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, color: 'var(--a1)' }}>
-                      <svg className="icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#849bb4', maxWidth: '520px', margin: '0 auto', padding: '24px' }}>
+                    <div style={{ display: 'inline-flex', padding: '13px', borderRadius: '14px', background: 'rgba(7, 140, 255, 0.1)', border: '1px solid rgba(7, 140, 255, 0.25)', color: '#38bdf8', marginBottom: '14px' }}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
                         <line x1="7" y1="7" x2="7.01" y2="7" />
                       </svg>
                     </div>
-                    <h3 style={{ color: '#fff', margin: '0 0 8px' }}>Enterprise Metadata Extraction Workspace</h3>
-                    <p style={{ fontSize: 14, lineHeight: 1.6 }}>
-                      Upload any document, picture, or poorly named file (<code style={{ color: 'var(--cyan)' }}>DOC_48383_FINAL_V2.pdf</code>) to extract 30+ standard enterprise metadata attributes, technical forensics, and retrieval queries.
+                    <b style={{ display: 'block', color: '#fff', fontSize: '18px' }}>Start a new metadata session with INDEX</b>
+                    <p style={{ fontSize: '14.5px', lineHeight: '1.65', marginTop: '10px', marginBottom: 0 }}>
+                      Drop any document, image, or poorly named file below to extract 30+ ISO 15836 Dublin Core, technical forensic, governance, and search-indexing attributes.
                     </p>
                   </div>
                 )}
